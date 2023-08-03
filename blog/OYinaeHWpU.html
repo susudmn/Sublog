@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vuex - 我是程序员</title>
+        <meta name="keywords" content="vue3vuex">
+        <meta name="description" content="1.概念在Vue中实现集中式状态（数据）管理的一个Vue插件，对vue应用中多个组件的共享状态进行集中式的管理（读/写），也是一种组件间通信的方式，且适用于任意组件间通信。2.何时使用？多个组件需要共享数据时3.搭建vuex环境创建文件：src/store/index.js//引入Vue核心库importVuefrom&#x27;vue&#x27;//引入VueximportVuexfrom&#x27;vuex&#x27;//应用Vuex插件Vue.use(Vuex)//准备actions对象——响应组件中用户的动作constactions={}//准备mutations对象——修改state">
+
+    <link rel="stylesheet" href="../resource/static/plugin/highlight/styles/github.min.css">
+    <link rel="stylesheet" href="../resource/static/plugin/viewer/viewer.min.css">
+    <script src="../resource/static/plugin/highlight/highlight.min.js"></script>
+    <script src="../resource/static/plugin/jquery/jquery.min.js"></script>
+    <script src="../resource/static/plugin/viewer/viewer-jquery.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <link rel="stylesheet" href="../resource/static/css/blog.detail.css">
+    <script>
+        $(document).ready(function (e) {
+            createToc();
+            $("#content").viewer({
+                navbar: false
+            });
+
+            $("#content a").each(function (index, element) {
+                $(element).attr("target", "_blank");
+            })
+
+            $(".icon-arrow").click(function () {
+                let nextLiDom = $(this).parent().next("div").eq(0)
+                if ($(this).hasClass("arrow-down")) {
+                    $(this).removeClass("arrow-down");
+                    $(this).addClass("arrow-right");
+                    nextLiDom.hide();
+                } else {
+                    $(this).removeClass("arrow-right");
+                    $(this).addClass("arrow-down");
+                    nextLiDom.show();
+                }
+            });
+
+            //目录展开收齐
+            $("#toc-title").click(function () {
+                let spanDom = $(this).find(".icon-arrow")
+                if (spanDom.hasClass("arrow-down")) {
+                    spanDom.removeClass("arrow-down");
+                    spanDom.addClass("arrow-right");
+                    $("#toc").hide();
+                } else {
+                    spanDom.removeClass("arrow-right");
+                    spanDom.addClass("arrow-down");
+                    $("#toc").show();
+                }
+            });
+        });
+
+        const createToc = () => {
+            const hTagList = ["h1", "h2", "h3", "h4", "h5", "h6", "h7"]
+            const children = document.querySelector("#content").children;
+            const hList = [];
+            for (let i = 0; i < children.length; i++) {
+                const node = children[i];
+                let tagName = node.tagName;
+                tagName = tagName == undefined ? "" : tagName.toLowerCase();
+                if (hTagList.indexOf(tagName) != -1) {
+                    const id = "hash-node-" + i;
+                    node.setAttribute("id", id);
+                    hList.push({
+                        pId: "0",
+                        id: id,
+                        level: Number.parseInt(tagName.substring(1, 2)),
+                        name: node.innerText,
+                    });
+                }
+            }
+            for (let i = 0; i < hList.length; i++) {
+                findParentId(hList, hList[i], i);
+            }
+            const newDataList = convertLine2Tree(hList, "0");
+            if (newDataList.length == 0) {
+                $("<div class='no-data'>暂无目录信息</div>").appendTo($("#toc"));
+                return;
+            }
+            newDataList.forEach(element => {
+                createTree($("#toc"), element);
+            })
+        }
+
+        const createTree = (pNode, data) => {
+            const currentNode = $("<div></div>").appendTo(pNode);
+            let extPadding = 26;
+            if (data.children.length > 0) {
+                extPadding = 10
+            }
+            const paddingLeft = (data.level - 1) * 16 + extPadding;
+            const titleNode = $("<div class='title' style='padding-left:" + paddingLeft + "px'></div>").appendTo(currentNode);
+            if (data.children.length > 0) {
+                $("<span class='icon-arrow arrow-down'></span>").appendTo(titleNode);
+            }
+            $("<a href='#" + data.id + "' title='" + data.name + "'>" + data.name + "</a>").appendTo(titleNode);
+
+            if (data.children.length > 0) {
+                let subNode = $("<div class='sub-title'></div>").appendTo(currentNode);
+                data.children.forEach(item => {
+                    createTree(subNode, item);
+                })
+            }
+        }
+
+        //查找父级节点
+        const findParentId = (hList, item, index) => {
+            for (let i = index - 1; i >= 0; i--) {
+                const pNode = hList[i];
+                if (pNode.level < item.level) {
+                    item.pId = pNode.id;
+                    break;
+                }
+            }
+        }
+
+        //将数据转换为树形
+        const convertLine2Tree = (hList, pId) => {
+            const children = [];
+            hList.forEach(element => {
+                if (element.pId === pId) {
+                    children.push(element);
+                    element.children = convertLine2Tree(hList, element.id);
+                }
+            });
+            return children;
+        }
+
+        $(window).scroll(function () {
+            //console.log($(document).scrollTop());
+            $("#right-container").css("top", $(document).scrollTop() + "px");
+        });
+
+        function scroll(markId) {
+            let url = document.location.href;
+            if (url.indexOf("#") == -1) {
+                document.location.href = url + "#" + markId;
+            } else {
+                document.location.href = url.substring(0, url.indexOf("#") + 1) + markId;
+            }
+            $("html,body").animate({scrollTop: $("#" + markId).offset().top - 80}, 100);
+        }
+    </script>
+</head>
+<body>
+    <div class="top">
+        <div class="top-container">
+            <div class="logo">
+                    <a href="../index.html">我是程序员</a>
+            </div>
+                <a href="../index.html" class="nav active">博客</a>
+                <a href="../category.html" class="nav ">分类专栏</a>
+                <a href="../special.html" class="nav ">专题</a>
+                <a href="../user.html" class="nav ">成员</a>
+                <a href="../comment.html" class="nav ">留言板</a>
+        </div>
+    </div>
+<div class="body-container">
+    <div class="blog-detail">
+        <div class="container">
+            <div class="container-content">
+                <div>
+                    <div class="blog-title">Vuex</div>
+                    <div class="blog-info">
+                        <div class="time">2023-08-03 05:14:04</div>
+                        <div class="nick-name">作者：<a href="../user.html#100002">秋秋</a></div>
+                        <div class="category">分类专栏：
+                                <a href="../category/10095.html">Vue</a>
+                        </div>
+
+                    </div>
+                    <div class="content" id="content"><h3 data-v-md-heading="_1-概念" data-v-md-line="1">1.概念</h3>
+<div data-v-md-line="3"><div class="v-md-pre-wrapper v-md-pre-wrapper- extra-class"><pre><code>在Vue中实现集中式状态（数据）管理的一个Vue插件，对vue应用中多个组件的共享状态进行集中式的管理（读/写），也是一种组件间通信的方式，且适用于任意组件间通信。
+</code></pre>
+</div></div><h3 data-v-md-heading="_2-何时使用" data-v-md-line="5">2.何时使用？</h3>
+<div data-v-md-line="7"><div class="v-md-pre-wrapper v-md-pre-wrapper- extra-class"><pre><code>多个组件需要共享数据时
+</code></pre>
+</div></div><h3 data-v-md-heading="_3-搭建vuex环境" data-v-md-line="9">3.搭建vuex环境</h3>
+<ol data-v-md-line="11">
+<li>
+<p data-v-md-line="11">创建文件：<code>src/store/index.js</code></p>
+<div data-v-md-line="13"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code><span class="hljs-comment">//引入Vue核心库</span>
+<span class="hljs-keyword">import</span> <span class="hljs-title class_">Vue</span> <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;vue&#x27;</span>
+<span class="hljs-comment">//引入Vuex</span>
+<span class="hljs-keyword">import</span> <span class="hljs-title class_">Vuex</span> <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;vuex&#x27;</span>
+<span class="hljs-comment">//应用Vuex插件</span>
+<span class="hljs-title class_">Vue</span>.<span class="hljs-title function_">use</span>(<span class="hljs-title class_">Vuex</span>)
+
+<span class="hljs-comment">//准备actions对象——响应组件中用户的动作</span>
+<span class="hljs-keyword">const</span> actions = {}
+<span class="hljs-comment">//准备mutations对象——修改state中的数据</span>
+<span class="hljs-keyword">const</span> mutations = {}
+<span class="hljs-comment">//准备state对象——保存具体的数据</span>
+<span class="hljs-keyword">const</span> state = {}
+
+<span class="hljs-comment">//创建并暴露store</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vuex</span>.<span class="hljs-title class_">Store</span>({
+	actions,
+	mutations,
+	state
+})
+</code></pre>
+</div></div></li>
+<li>
+<p data-v-md-line="35">在 <code>main.js</code>中创建vm时传入 <code>store</code>配置项</p>
+<div data-v-md-line="37"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code>......
+<span class="hljs-comment">//引入store</span>
+<span class="hljs-keyword">import</span> store <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./store&#x27;</span>
+......
+
+<span class="hljs-comment">//创建vm</span>
+<span class="hljs-keyword">new</span> <span class="hljs-title class_">Vue</span>({
+	<span class="hljs-attr">el</span>:<span class="hljs-string">&#x27;#app&#x27;</span>,
+	<span class="hljs-attr">render</span>: <span class="hljs-function"><span class="hljs-params">h</span> =&gt;</span> <span class="hljs-title function_">h</span>(<span class="hljs-title class_">App</span>),
+	store
+})
+</code></pre>
+</div></div></li>
+</ol>
+<h3 data-v-md-heading="_4-基本使用" data-v-md-line="51">4.基本使用</h3>
+<ol data-v-md-line="53">
+<li>
+<p data-v-md-line="53">初始化数据、配置 <code>actions</code>、配置 <code>mutations</code>，操作文件 <code>store.js</code></p>
+<div data-v-md-line="55"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code><span class="hljs-comment">//引入Vue核心库</span>
+<span class="hljs-keyword">import</span> <span class="hljs-title class_">Vue</span> <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;vue&#x27;</span>
+<span class="hljs-comment">//引入Vuex</span>
+<span class="hljs-keyword">import</span> <span class="hljs-title class_">Vuex</span> <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;vuex&#x27;</span>
+<span class="hljs-comment">//引用Vuex</span>
+<span class="hljs-title class_">Vue</span>.<span class="hljs-title function_">use</span>(<span class="hljs-title class_">Vuex</span>)
+
+<span class="hljs-keyword">const</span> actions = {
+    <span class="hljs-comment">//响应组件中加的动作</span>
+	<span class="hljs-title function_">jia</span>(<span class="hljs-params">context,value</span>){
+		<span class="hljs-comment">// console.log(&#x27;actions中的jia被调用了&#x27;,miniStore,value)</span>
+		context.<span class="hljs-title function_">commit</span>(<span class="hljs-string">&#x27;JIA&#x27;</span>,value)
+	},
+}
+
+<span class="hljs-keyword">const</span> mutations = {
+    <span class="hljs-comment">//执行加</span>
+	<span class="hljs-title function_">JIA</span>(<span class="hljs-params">state,value</span>){
+		<span class="hljs-comment">// console.log(&#x27;mutations中的JIA被调用了&#x27;,state,value)</span>
+		state.<span class="hljs-property">sum</span> += value
+	}
+}
+
+<span class="hljs-comment">//初始化数据</span>
+<span class="hljs-keyword">const</span> state = {
+   <span class="hljs-attr">sum</span>:<span class="hljs-number">0</span>
+}
+
+<span class="hljs-comment">//创建并暴露store</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vuex</span>.<span class="hljs-title class_">Store</span>({
+	actions,
+	mutations,
+	state,
+})
+</code></pre>
+</div></div></li>
+<li>
+<p data-v-md-line="91">组件中读取vuex中的数据：<code>$store.state.sum</code></p>
+</li>
+<li>
+<p data-v-md-line="92">组件中修改vuex中的数据：<code>$store.dispatch('action中的方法名',数据)</code> 或 <code>$store.commit('mutations中的方法名',数据)</code></p>
+<blockquote data-v-md-line="94">
+<p data-v-md-line="94">备注：若没有网络请求或其他业务逻辑，组件中也可以越过actions，即不写 <code>dispatch</code>，直接编写 <code>commit</code></p>
+</blockquote>
+</li>
+</ol>
+<h3 data-v-md-heading="_5-getters的使用" data-v-md-line="97">5.getters的使用</h3>
+<ol data-v-md-line="99">
+<li>
+<p data-v-md-line="99">概念：当state中的数据需要经过加工后再使用时，可以使用getters加工。</p>
+</li>
+<li>
+<p data-v-md-line="100">在 <code>store.js</code>中追加 <code>getters</code>配置</p>
+<div data-v-md-line="102"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code>......
+
+<span class="hljs-keyword">const</span> getters = {
+	<span class="hljs-title function_">bigSum</span>(<span class="hljs-params">state</span>){
+		<span class="hljs-keyword">return</span> state.<span class="hljs-property">sum</span> * <span class="hljs-number">10</span>
+	}
+}
+
+<span class="hljs-comment">//创建并暴露store</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vuex</span>.<span class="hljs-title class_">Store</span>({
+	......
+	getters
+})
+</code></pre>
+</div></div></li>
+<li>
+<p data-v-md-line="117">组件中读取数据：<code>$store.getters.bigSum</code></p>
+</li>
+</ol>
+<h3 data-v-md-heading="_6-四个map方法的使用" data-v-md-line="119">6.四个map方法的使用</h3>
+<ol data-v-md-line="121">
+<li>
+<p data-v-md-line="121"><code>&lt;strong&gt;</code>mapState方法：<code>&lt;/strong&gt;</code>用于帮助我们映射 <code>state</code>中的数据为计算属性</p>
+<div data-v-md-line="123"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code><span class="hljs-attr">computed</span>: {
+    <span class="hljs-comment">//借助mapState生成计算属性：sum、school、subject（对象写法）</span>
+     ...<span class="hljs-title function_">mapState</span>({<span class="hljs-attr">sum</span>:<span class="hljs-string">&#x27;sum&#x27;</span>,<span class="hljs-attr">school</span>:<span class="hljs-string">&#x27;school&#x27;</span>,<span class="hljs-attr">subject</span>:<span class="hljs-string">&#x27;subject&#x27;</span>}),
+
+    <span class="hljs-comment">//借助mapState生成计算属性：sum、school、subject（数组写法）</span>
+    ...<span class="hljs-title function_">mapState</span>([<span class="hljs-string">&#x27;sum&#x27;</span>,<span class="hljs-string">&#x27;school&#x27;</span>,<span class="hljs-string">&#x27;subject&#x27;</span>]),
+},
+</code></pre>
+</div></div></li>
+<li>
+<p data-v-md-line="132"><code>&lt;strong&gt;</code>mapGetters方法：<code>&lt;/strong&gt;</code>用于帮助我们映射 <code>getters</code>中的数据为计算属性</p>
+<div data-v-md-line="134"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code><span class="hljs-attr">computed</span>: {
+    <span class="hljs-comment">//借助mapGetters生成计算属性：bigSum（对象写法）</span>
+    ...<span class="hljs-title function_">mapGetters</span>({<span class="hljs-attr">bigSum</span>:<span class="hljs-string">&#x27;bigSum&#x27;</span>}),
+
+    <span class="hljs-comment">//借助mapGetters生成计算属性：bigSum（数组写法）</span>
+    ...<span class="hljs-title function_">mapGetters</span>([<span class="hljs-string">&#x27;bigSum&#x27;</span>])
+},
+</code></pre>
+</div></div></li>
+<li>
+<p data-v-md-line="143"><code>&lt;strong&gt;</code>mapActions方法：<code>&lt;/strong&gt;</code>用于帮助我们生成与 <code>actions</code>对话的方法，即：包含 <code>$store.dispatch(xxx)</code>的函数</p>
+<div data-v-md-line="145"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code><span class="hljs-attr">methods</span>:{
+    <span class="hljs-comment">//靠mapActions生成：incrementOdd、incrementWait（对象形式）</span>
+    ...<span class="hljs-title function_">mapActions</span>({<span class="hljs-attr">incrementOdd</span>:<span class="hljs-string">&#x27;jiaOdd&#x27;</span>,<span class="hljs-attr">incrementWait</span>:<span class="hljs-string">&#x27;jiaWait&#x27;</span>})
+
+    <span class="hljs-comment">//靠mapActions生成：incrementOdd、incrementWait（数组形式）</span>
+    ...<span class="hljs-title function_">mapActions</span>([<span class="hljs-string">&#x27;jiaOdd&#x27;</span>,<span class="hljs-string">&#x27;jiaWait&#x27;</span>])
+}
+</code></pre>
+</div></div></li>
+<li>
+<p data-v-md-line="154"><code>&lt;strong&gt;</code>mapMutations方法：<code>&lt;/strong&gt;</code>用于帮助我们生成与 <code>mutations</code>对话的方法，即：包含 <code>$store.commit(xxx)</code>的函数</p>
+<div data-v-md-line="156"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code><span class="hljs-attr">methods</span>:{
+    <span class="hljs-comment">//靠mapActions生成：increment、decrement（对象形式）</span>
+    ...<span class="hljs-title function_">mapMutations</span>({<span class="hljs-attr">increment</span>:<span class="hljs-string">&#x27;JIA&#x27;</span>,<span class="hljs-attr">decrement</span>:<span class="hljs-string">&#x27;JIAN&#x27;</span>}),
+
+    <span class="hljs-comment">//靠mapMutations生成：JIA、JIAN（对象形式）</span>
+    ...<span class="hljs-title function_">mapMutations</span>([<span class="hljs-string">&#x27;JIA&#x27;</span>,<span class="hljs-string">&#x27;JIAN&#x27;</span>]),
+}
+</code></pre>
+</div></div></li>
+</ol>
+<blockquote data-v-md-line="166">
+<p data-v-md-line="166">备注：mapActions与mapMutations使用时，若需要传递参数需要：在模板中绑定事件时传递好参数，否则参数是事件对象。</p>
+</blockquote>
+<h3 data-v-md-heading="_7-模块化-命名空间" data-v-md-line="168">7.模块化+命名空间</h3>
+<ol data-v-md-line="170">
+<li>
+<p data-v-md-line="170">目的：让代码更好维护，让多种数据分类更加明确。</p>
+</li>
+<li>
+<p data-v-md-line="171">修改 <code>store.js</code></p>
+<div data-v-md-line="173"><div class="v-md-pre-wrapper v-md-pre-wrapper-javascript extra-class"><pre class="v-md-hljs-javascript"><code><span class="hljs-keyword">const</span> countAbout = {
+  <span class="hljs-attr">namespaced</span>:<span class="hljs-literal">true</span>,<span class="hljs-comment">//开启命名空间</span>
+  <span class="hljs-attr">state</span>:{<span class="hljs-attr">x</span>:<span class="hljs-number">1</span>},
+  <span class="hljs-attr">mutations</span>: { ... },
+  <span class="hljs-attr">actions</span>: { ... },
+  <span class="hljs-attr">getters</span>: {
+    <span class="hljs-title function_">bigSum</span>(<span class="hljs-params">state</span>){
+       <span class="hljs-keyword">return</span> state.<span class="hljs-property">sum</span> * <span class="hljs-number">10</span>
+    }
+  }
+}
+
+<span class="hljs-keyword">const</span> personAbout = {
+  <span class="hljs-attr">namespaced</span>:<span class="hljs-literal">true</span>,<span class="hljs-comment">//开启命名空间</span>
+  <span class="hljs-attr">state</span>:{ ... },
+  <span class="hljs-attr">mutations</span>: { ... },
+  <span class="hljs-attr">actions</span>: { ... }
+}
+
+<span class="hljs-keyword">const</span> store = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vuex</span>.<span class="hljs-title class_">Store</span>({
+  <span class="hljs-attr">modules</span>: {
+    countAbout,
+    personAbout
+  }
+})
+</code></pre>
+</div></div></li>
+<li>
+<p data-v-md-line="200">开启命名空间后，组件中读取state数据：</p>
+<div data-v-md-line="202"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code><span class="hljs-comment">//方式一：自己直接读取</span>
+<span class="hljs-variable language_">this</span>.<span class="hljs-property">$store</span>.<span class="hljs-property">state</span>.<span class="hljs-property">personAbout</span>.<span class="hljs-property">list</span>
+<span class="hljs-comment">//方式二：借助mapState读取：</span>
+...<span class="hljs-title function_">mapState</span>(<span class="hljs-string">&#x27;countAbout&#x27;</span>,[<span class="hljs-string">&#x27;sum&#x27;</span>,<span class="hljs-string">&#x27;school&#x27;</span>,<span class="hljs-string">&#x27;subject&#x27;</span>]),
+</code></pre>
+</div></div></li>
+<li>
+<p data-v-md-line="208">开启命名空间后，组件中读取getters数据：</p>
+<div data-v-md-line="210"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code><span class="hljs-comment">//方式一：自己直接读取</span>
+<span class="hljs-variable language_">this</span>.<span class="hljs-property">$store</span>.<span class="hljs-property">getters</span>[<span class="hljs-string">&#x27;personAbout/firstPersonName&#x27;</span>]
+<span class="hljs-comment">//方式二：借助mapGetters读取：</span>
+...<span class="hljs-title function_">mapGetters</span>(<span class="hljs-string">&#x27;countAbout&#x27;</span>,[<span class="hljs-string">&#x27;bigSum&#x27;</span>])
+</code></pre>
+</div></div></li>
+<li>
+<p data-v-md-line="216">开启命名空间后，组件中调用dispatch</p>
+<div data-v-md-line="218"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code><span class="hljs-comment">//方式一：自己直接dispatch</span>
+<span class="hljs-variable language_">this</span>.<span class="hljs-property">$store</span>.<span class="hljs-title function_">dispatch</span>(<span class="hljs-string">&#x27;personAbout/addPersonWang&#x27;</span>,person)
+<span class="hljs-comment">//方式二：借助mapActions：</span>
+...<span class="hljs-title function_">mapActions</span>(<span class="hljs-string">&#x27;countAbout&#x27;</span>,{<span class="hljs-attr">incrementOdd</span>:<span class="hljs-string">&#x27;jiaOdd&#x27;</span>,<span class="hljs-attr">incrementWait</span>:<span class="hljs-string">&#x27;jiaWait&#x27;</span>})
+</code></pre>
+</div></div></li>
+<li>
+<p data-v-md-line="224">开启命名空间后，组件中调用commit</p>
+<div data-v-md-line="226"><div class="v-md-pre-wrapper v-md-pre-wrapper-js extra-class"><pre class="v-md-hljs-js"><code><span class="hljs-comment">//方式一：自己直接commit</span>
+<span class="hljs-variable language_">this</span>.<span class="hljs-property">$store</span>.<span class="hljs-title function_">commit</span>(<span class="hljs-string">&#x27;personAbout/ADD_PERSON&#x27;</span>,person)
+<span class="hljs-comment">//方式二：借助mapMutations：</span>
+...<span class="hljs-title function_">mapMutations</span>(<span class="hljs-string">&#x27;countAbout&#x27;</span>,{<span class="hljs-attr">increment</span>:<span class="hljs-string">&#x27;JIA&#x27;</span>,<span class="hljs-attr">decrement</span>:<span class="hljs-string">&#x27;JIAN&#x27;</span>}),
+</code></pre>
+</div></div></li>
+</ol>
+</div>
+                </div>
+            </div>
+        </div>
+        <div class="right">
+            <div class="container" id="right-container">
+                <div class="right-title toc-title">目录结构</div>
+                <div id="toc"></div>
+
+                <div class="right-title category-title">
+                    <span>分类专栏</span>
+                    <a href="../category.html" class="more">更多>></a>
+                </div>
+                    <a href="../category/10032.html" class="category-item">
+                        <span class="category-icon">
+                                <img src="../resource/image/202308/DYgwYtgHzYWYrjOlHTNmtOCCvvMtFd.png">
+                        </span>
+                        <span class="category-name" title="EasyBlog">EasyBlog</span>
+                        <span class="blog-count">2篇</span>
+                    </a>
+                    <a href="../category/10095.html" class="category-item">
+                        <span class="category-icon">
+                                <img src="../resource/image/202308/rckeBxadkBuwpnyQwjeYoVvyxRRlRZ.png">
+                        </span>
+                        <span class="category-name" title="Vue">Vue</span>
+                        <span class="blog-count">4篇</span>
+                    </a>
+                    <a href="../category/10096.html" class="category-item">
+                        <span class="category-icon">
+                                <img src="../resource/image/202308/cDCKQSJauqpsDdkpfwiWhhwwKxOKij.png">
+                        </span>
+                        <span class="category-name" title="bug合集">bug合集</span>
+                        <span class="blog-count">0篇</span>
+                    </a>
+                    <a href="../category/10097.html" class="category-item">
+                        <span class="category-icon">
+                                <img src="../resource/image/202308/eqkdKElubbxgMgmeYxZTNARHyqcReQ.png">
+                        </span>
+                        <span class="category-name" title="HTML & CSS">HTML & CSS</span>
+                        <span class="blog-count">0篇</span>
+                    </a>
+                    <a href="../category/10098.html" class="category-item">
+                        <span class="category-icon">
+                                <img src="../resource/image/202308/SHMeOrjSchtxcGyQQYMTUpttVlhNmA.png">
+                        </span>
+                        <span class="category-name" title="Javascript">Javascript</span>
+                        <span class="blog-count">0篇</span>
+                    </a>
+            </div>
+        </div>
+    </div>
+</div>
+    <script>
+        var _hmt = _hmt || [];
+        (function () {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?63b3f00d92dbfecbe9376c26282c2599";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+</body>
+</html>
